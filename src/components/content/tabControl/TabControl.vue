@@ -1,9 +1,9 @@
 <template>
   <div class="tab-control">
     <div v-for="(item, index) in titles" :key="index" 
-    class="tab-control-item" 
-    :class="{active: index === currrentIndex}" 
-    @click="itemClick(index)">
+         class="tab-control-item" 
+         :class="{active: currentIndex === index}" 
+         @click="itemClick(index)">
       <span>{{item}}</span>
     </div>
   </div>
@@ -15,20 +15,20 @@ export default {
   components: {},
   props: {
     titles: {
-        type: Array,
-        default() {
-            return []
-        }
+      type: Array,
+      default() {
+        return []
+      }
     }
   },
   data() {
     return {
-      currrentIndex : 0
+      currentIndex : 0
     }
   },
   methods: {
     itemClick(index) {
-      this.currrentIndex = index
+      this.currentIndex = index
       this.$emit('tabClick', index)
     }
   },

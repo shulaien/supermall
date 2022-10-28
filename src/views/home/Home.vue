@@ -1,19 +1,25 @@
 <template>
     <div id="home">
       <nav-bar class="nav-home"><div slot="center">购物商城</div></nav-bar>
+      <tab-control :titles="['流行', '新款', '精选']" 
+                    ref="tabControl1"
+                    @tabClick="tabClick" 
+                    v-show="isTabFixed"/>
       <!-- coderwhy老师这里使用了better-scroll组件封装,
-      但在应用中bug太多,我直接用原生 scroll 实现滚动相关功能了 -->
-      <scroll ref="myscroll" 
-              :handle-listen="true"
+      但在应用中bug太多,我一开始用原生 scroll 实现滚动相关功能了;
+      后来又下载最新版本的 better-scroll组件 封装-->
+      <scroll class="wrapper" ref="myscroll" 
+              :probe-type="3"
               @handleScroll="contentScroll" 
-              :pull-listen="true" 
-              @pullUpLoad="loadMore">
-        <home-swiper :banners="banners"/>
+              :pull-up-load="true" 
+              @pullingUp="loadMore">
+        <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"/>
         <recommend-views :recommends="recommends"/>
         <feature-view/>
         <tab-control :titles="['流行', '新款', '精选']" 
-                      class="tab-control" 
-                      @tabClick="tabClick"/>
+                      ref="tabControl2"
+                      @tabClick="tabClick"
+                      v-show="!isTabFixed"/>
         <goods-list :cgoods="showGoods"/>
       </scroll>
       <back-top @click.native="backClick" v-show="isShowBackTop"/>
@@ -28,7 +34,6 @@ import FeatureView from './childComps/FeatureView.vue'
 import NavBar from '@/components/common/navbar/NavBar.vue'
 import TabControl from '@/components/content/tabControl/TabControl.vue'
 import GoodsList from '@/components/content/goods/GoodsList.vue'
-
 import Scroll from '@/components/common/scroll/Scroll.vue'
 import BackTop from '@/components/content/backTop/BackTop.vue'
 
@@ -48,7 +53,6 @@ export default {
   name: 'Home',
   data() {
     return {
-      // result: null
       banners: [],
       recommends: [],
       goods: {
@@ -57,7 +61,9 @@ export default {
         'sell': {page: 0, list: []},
       },
       currentType: 'pop',
-      isShowBackTop: false
+      isShowBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
     }
   },
   computed: {
@@ -65,8 +71,8 @@ export default {
       return this.goods[this.currentType].list
     }
   },
-  // 1.请求多个首页数据
   created() {
+    // 1.请求多个首页数据
     this.getHomeMultidata()
 
     // 2.请求商品数据
@@ -88,28 +94,37 @@ export default {
           break
         case 2:
           this.currentType = 'sell'
-          break
-          
-      }
+          break 
+      }      
+      this.$refs.tabControl2.currentIndex = index;
+      this.$refs.tabControl1.currentIndex = index;
      },
      backClick() {
-      // console.log('backClick');
-      // document.documentElement.scrollTop = 0;
-      this.$refs.myscroll.backTop()
+      this.$refs.myscroll.backTop(0, 0, 500)
      },
-     contentScroll(scrollTop) {
-      this.isShowBackTop = scrollTop > 1000
+     contentScroll(position) {
+      // 1.判断是否显示回到顶部
+      this.isShowBackTop = (-position.y) > 1000
+
+      // 2.判断tabControl是否吸顶(-position.y > 546)
+      this.isTabFixed = (-position.y) > this.tabOffsetTop
+
+      // 3.获取首页的位置信息
+      this.saveY = position.y
      },
      loadMore() {
-      // console.log('上拉加载更多');
       this.getHomeGoods(this.currentType)
+      this.$refs.myscroll.refresh()
      },
+     swiperImageLoad() {
+      // 每个组件都有一个属性$el: 用于获取组件的元素
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop - 44
+    },
     /**
      * 网络请求相关的方法
      */
     getHomeMultidata() {
       getHomeMultidata().then(res => {
-        // this.result = res
         this.banners = res.data.banner.list
         this.recommends = res.data.recommend.list
       })
@@ -119,6 +134,9 @@ export default {
       getHomeGoods(type, page).then(res => {
         this.goods[type].list.push(...res.data.list)
         this.goods[type].page += 1
+
+        // 完成上拉加载更多
+        this.$refs.myscroll.finishPullUp()
       })
     }
   },
@@ -127,33 +145,40 @@ export default {
 
 <style>
   #home {
-    padding-top: 44px;
+    /* padding-top: 44px; */
     height: 100vh;
   }
   .nav-home {
     color: #fff;
     background-color: pink;
     /* background-color: var(--color-tint); */
-    position: fixed;
+
+    /* 当使用浏览器原生滚动时,为了不让导航栏跟着滚动
+       需要配合 #home 中的padding-top使用 */
+    /* position: fixed;
     left: 0;
     right: 0;
     top: 0;
-    z-index: 9;
+    z-index: 9; */
   }
+
+  /* 使用Better-Scroll后粘性定位失效 */
   .tab-control {
     position: sticky;
     top: 44px;
     z-index: 9;
   }
-  /* .content {
+
+  .wrapper {
+    height: calc(100% - 49px);
+    overflow: hidden;
+  }
+  /* .wrapper {
     position: absolute;
     top: 44px;
     bottom: 49px;
     left: 0;
     right: 0;
   } */
-  /* .content {
-    height: calc(100% - 93px);
-    overflow: hidden;
-  } */
+ 
 </style>

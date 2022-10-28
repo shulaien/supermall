@@ -1,7 +1,7 @@
 <template>
   <div class="goods">
     <goods-list-item v-for="(item, index) in cgoods" :key="index" 
-    :goods-item="item"/>
+                     :goods-item="item"/>
   </div>
 </template>
 
