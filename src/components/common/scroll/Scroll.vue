@@ -51,7 +51,7 @@ export default {
   },
 
   methods: {
-    backTop(x, y, timer) {
+    scrollTo(x, y, timer) {
       this.scroll && this.scroll.scrollTo(x, y, timer)
     },
     finishPullUp() {

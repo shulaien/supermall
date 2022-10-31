@@ -64,6 +64,7 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
+      saveY: 0
     }
   },
   computed: {
@@ -80,6 +81,19 @@ export default {
     this.getHomeGoods('new')
     this.getHomeGoods('sell')
   },
+  destroyed() {
+    console.log('home destroyed');
+  },
+  activated() {
+      this.$refs.myscroll.scroll.refresh()
+      this.$refs.myscroll.scrollTo(0,this.saveY)
+  },
+  // deactivated() {
+  //   if(this.$refs.myscroll.scroll) {
+  //     this.saveY = this.$refs.myscroll.scroll.y
+  //     console.log(this.saveY);
+  //   }
+  // },
   methods: {
     /**
      * 事件监听相关的方法
@@ -100,7 +114,7 @@ export default {
       this.$refs.tabControl1.currentIndex = index;
      },
      backClick() {
-      this.$refs.myscroll.backTop(0, 0, 500)
+      this.$refs.myscroll.scrollTo(0, 0, 500)
      },
      contentScroll(position) {
       // 1.判断是否显示回到顶部
